@@ -11,7 +11,6 @@ export class AuthController {
     
     register = async (req: Request, res: Response) => {
         try {
-            console.log("Registering user with data:", req.body);
             const user = await this.authService.register(req.body);
             res.status(201).json({
                 message: "User registered successfully",
@@ -30,4 +29,79 @@ export class AuthController {
             });
         }
     }
+
+    login = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const loginResponse = await this.authService.login(req.body);
+            res.status(200)
+            .cookie("accessToken", loginResponse.accessToken,{
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 15 * 60 * 1000,
+                sameSite: 'strict'
+            })
+            .json({
+                message: "User logged in successfully",
+                user: {
+                    email: loginResponse.email,
+                    firstName: loginResponse.firstName,
+                    lastName: loginResponse.lastName,
+                },
+                tokens :{
+                    accessToken: loginResponse.accessToken,
+                    refreshToken: loginResponse.refreshToken
+                }
+            });
+        } catch (error) {
+            console.error("Error logging in user:", error);
+            res.status(500).json({
+                message: "Error logging in user",
+                error: error instanceof Error ? error.message : String(error)
+            });
+        }
+    }
+
+    refreshToken = async (req: Request, res: Response) => {
+        try {
+            const { refreshToken } = req.body;
+            if (!refreshToken) {
+                res.status(400).json({ 
+                    message: "Refresh token is required",
+                    error: "Missing refresh token" 
+                });
+                return;
+            }
+
+            const accessToken = await this.authService.refreshAccessToken(refreshToken);
+            
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 15 * 60 * 1000,
+                sameSite: 'strict'
+            });
+
+            res.status(200).json({ message: "Token refreshed", accessToken: accessToken  });
+        } catch (error) {
+            res.status(401).json({ error: error });
+        }
+    };
+
+    logout = async (req: Request, res: Response) => {
+        try {
+            const { refreshToken } = req.body;
+            if (!refreshToken) {
+                res.status(400).json({ 
+                    message: "Refresh token is required for logout",
+                    error: "Missing refresh token" 
+                });
+                return;
+            }
+            await this.authService.logout(refreshToken);
+            res.clearCookie('accessToken');
+            res.status(200).json({ message: "Logged out" });
+        } catch (error) {
+            res.status(500).json({ error: error });
+        }
+    };
 }
