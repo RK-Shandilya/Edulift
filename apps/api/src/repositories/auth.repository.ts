@@ -49,14 +49,13 @@ export default class AuthRepository {
     async storeRefreshToken(user_id: string, token: string) {
         try {
             await prisma.$transaction(async (tx) => {
-                await tx.refreshToken.updateMany({
+                await tx.refreshToken.deleteMany({
                     where: {
                         userId: user_id,
-                        revoked: false
+                        expiresAt: {
+                            lt: new Date()
+                        }
                     },
-                    data: {
-                        revoked: true
-                    }
                 })
 
                 await tx.refreshToken.create({
@@ -111,20 +110,16 @@ export default class AuthRepository {
         }
     }
 
-    async deleteAllRefreshTokensForUser(userId: string): Promise<void> {
+    async deleteExpiredRefreshTokens(): Promise<number> {
         try {
-            await prisma.refreshToken.updateMany({
+            const result = await prisma.refreshToken.deleteMany({
                 where: {
-                    userId: userId,
-                    revoked: false
+                    expiresAt: { lt: new Date() },
                 },
-                data: {
-                    revoked: true
-                }
             });
-            console.log("All refresh tokens revoked for user:", userId);
+            return result.count;
         } catch (error) {
-            throw new Error("Error revoking all refresh tokens: " + error);
+            throw new Error(`Error deleting expired tokens: ${error}`);
         }
     }
 }

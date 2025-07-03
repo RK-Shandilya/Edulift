@@ -4,7 +4,7 @@ import { loginResponse, userLoginData, userRegisterData } from "@repo/types/inde
 import jwt, { SignOptions} from "jsonwebtoken";
 
 export default class AuthService {
-    private authRepository;
+    public authRepository;
     constructor(authRepository: AuthRepository) {
         this.authRepository = authRepository;
     }
@@ -13,11 +13,13 @@ export default class AuthService {
         if(userExists) {
             throw new Error("User already exists with this email");
         }
+
         const hashedPassword = await bcrypt.hash(userData.password, 10);
         const userDataWithHashedPassword = {
             ...userData,
             password: hashedPassword
         };
+        
         const user = await this.authRepository.register(userDataWithHashedPassword);
         const {password, ...userWithoutPassword} = user
         return userWithoutPassword;

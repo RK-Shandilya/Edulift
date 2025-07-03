@@ -1,12 +1,15 @@
 import { Request, Response } from "express";
 import AuthService from "../services/auth.service";
 import AuthRepository from "../repositories/auth.repository";
+import OAuthService from "../services/oauth.service";
 
 export class AuthController {
     private authService: AuthService;
+    private oauthService: OAuthService;
     
     constructor() {
         this.authService = new AuthService(new AuthRepository());
+        this.oauthService = new OAuthService();
     }
     
     register = async (req: Request, res: Response) => {
@@ -104,4 +107,59 @@ export class AuthController {
             res.status(500).json({ error: error });
         }
     };
+
+    oauthRedirect = async (req: Request, res: Response) => {
+        try {
+            const provider = req.params.provider;
+            if(!provider) {
+                res.status(400).json({ 
+                    message: "OAuth provider is required",
+                    error: "Missing OAuth provider" 
+                });
+                return;
+            }
+            const url = this.oauthService.getProvider(provider).getAuthUrl();
+            res.redirect(url);
+        } catch (error) {
+            res.status(400).json({ 
+                message: "Invalid OAuth provider",
+                error: error instanceof Error ? error.message : String(error)
+            });
+        }
+    }
+
+    oauthCallback = async (req: Request, res: Response) => {
+        try {
+            const provider = req.params.provider;
+            const { code } = req.query;
+
+            const { user, tokens } = await this.oauthService.handleCallback(provider, code);
+            
+            res.status(200)
+                .cookie("accessToken", tokens.accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 15 * 60 * 1000,
+                sameSite: 'strict'
+                })
+                .json({
+                message: `${provider} OAuth successful`,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                },
+                tokens: {
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken
+                }
+            });
+        } catch (error) {
+            res.status(500).json({ 
+                message: "OAuth authentication failed",
+                error: error instanceof Error ? error.message : String(error)
+            });
+        }
+    }
 }
