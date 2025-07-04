@@ -13,7 +13,7 @@ export interface userLoginData {
     refreshToken?: string;
 }
 
-export interface loginResponse extends Omit<userRegisterData, 'password' | 'id'> {
+export interface loginResponse extends Omit<userRegisterData, 'password'> {
     accessToken: string;
     refreshToken: string;
 }
@@ -39,4 +39,14 @@ export interface IOAuthProvider {
   getAuthUrl(): string;
   getTokens(code: string): Promise<OAuthTokenResponse>;
   getUserProfile(accessToken: string): Promise<OAuthUserProfile>;
+}
+
+export interface EmailOptions {
+    to: string;
+    templateId: string;
+    dynamicTemplateData: {
+      firstName: string;
+      help_center_link? : string;
+      login_link? : string;
+    }
 }

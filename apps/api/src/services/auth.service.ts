@@ -2,12 +2,14 @@ import AuthRepository from "../repositories/auth.repository";
 import bcrypt from "bcryptjs";
 import { loginResponse, userLoginData, userRegisterData } from "@repo/types/index";
 import jwt, { SignOptions} from "jsonwebtoken";
+import { sendEmail } from "../utils/email.util";
 
 export default class AuthService {
     public authRepository;
     constructor(authRepository: AuthRepository) {
         this.authRepository = authRepository;
     }
+
     async register(userData: userRegisterData): Promise<Omit<userRegisterData, 'password'>> {
         const userExists = await this.authRepository.getUserByEmail(userData.email);
         if(userExists) {
@@ -21,7 +23,22 @@ export default class AuthService {
         };
         
         const user = await this.authRepository.register(userDataWithHashedPassword);
-        const {password, ...userWithoutPassword} = user
+        const {password, ...userWithoutPassword} = user;
+
+        try {
+            await sendEmail({
+                to: user.email,
+                templateId: process.env.SENDGRID_TEMPLATE_ID!,
+                dynamicTemplateData: {
+                    firstName: user.firstName,
+                    login_link: process.env.SENDGRID_LOGIN_LINK,
+                    help_center_link: process.env.SENDGRID_HELP_CENTER_LINK
+                }
+            });
+        } catch (error) {
+            console.error("Error sending email:", error);
+        }
+
         return userWithoutPassword;
     }
 
@@ -42,6 +59,7 @@ export default class AuthService {
         await this.authRepository.storeRefreshToken(user.id, refreshToken);
 
         return {
+            id: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,

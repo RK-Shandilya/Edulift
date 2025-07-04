@@ -46,6 +46,7 @@ export class AuthController {
             .json({
                 message: "User logged in successfully",
                 user: {
+                    id: loginResponse.id,
                     email: loginResponse.email,
                     firstName: loginResponse.firstName,
                     lastName: loginResponse.lastName,
@@ -93,13 +94,6 @@ export class AuthController {
     logout = async (req: Request, res: Response) => {
         try {
             const { refreshToken } = req.body;
-            if (!refreshToken) {
-                res.status(400).json({ 
-                    message: "Refresh token is required for logout",
-                    error: "Missing refresh token" 
-                });
-                return;
-            }
             await this.authService.logout(refreshToken);
             res.clearCookie('accessToken');
             res.status(200).json({ message: "Logged out" });

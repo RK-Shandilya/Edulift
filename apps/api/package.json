@@ -17,6 +17,7 @@
     "@repo/typescript-config": "workspace:*"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.5",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.10.0",
