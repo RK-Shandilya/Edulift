@@ -1,35 +1,42 @@
-import { userRegisterData } from "@repo/types/index"
+import { User, UserRegisterData } from "@repo/types/index"
 import { prisma } from "@repo/db/index";
 
 export default class AuthRepository {
 
-    async getUserByEmail(email: string): Promise<userRegisterData | null> {
+    constructor() {
+
+    }
+
+    async getUserByEmail(email: string): Promise<User | null> {
         try {
             const user = await prisma.user.findUnique({
                 where: {
                     email: email
                 }
             })
-            return user;
+            if(!user) {
+                return null;
+            }
+            return user as User;
         } catch (error) {
             throw new Error("Error fetching user by email: " + error);
         }
     }
 
-    async getUserById(user_id: string): Promise<userRegisterData | null> {
+    async getUserById(user_id: string): Promise<User | null> {
         try {
             const user = await prisma.user.findUnique({
                 where: {
                     id: user_id
                 }
             })
-            return user;
+            return user as User;
         } catch (error) {
             throw new Error("Error fetching user by ID: " + error);
         }
     }
 
-    async register(userData : userRegisterData): Promise<userRegisterData> {
+    async register(userData : UserRegisterData): Promise<UserRegisterData> {
         try {
             const newUser = await prisma.user.create({
                 data: {
@@ -73,7 +80,7 @@ export default class AuthRepository {
         }
     }
 
-    async getRefreshToken(token: string): Promise<{ userId: string } | null> {
+    async getRefreshToken(token: string): Promise<{ userId: string; token: string } | null> {
         try {
             const refreshToken = await prisma.refreshToken.findFirst({
                 where: {
@@ -84,7 +91,8 @@ export default class AuthRepository {
                     }
                 },
                 select: {
-                    userId: true
+                    userId: true,
+                    token: true
                 }
             });
 
@@ -120,6 +128,77 @@ export default class AuthRepository {
             return result.count;
         } catch (error) {
             throw new Error(`Error deleting expired tokens: ${error}`);
+        }
+    }
+
+    async updatePassword(userId: string, newPassword: string): Promise<void> {
+        try {
+            await prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    password: newPassword
+                }
+            });
+            console.log("Password updated successfully for user:", userId);
+        } catch (error) {
+            throw new Error("Error updating password: " + error);
+        }
+    }
+
+    async storeResetToken(userId: string, resetToken: string, reset: Date): Promise<void> {
+        try {
+            await prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    resetToken: resetToken,
+                    resetTokenExpiry: reset
+                }
+            });
+            console.log("Reset token stored successfully for user:", userId);
+        } catch (error) {
+            throw new Error("Error storing reset token: " + error);
+        }
+    }
+
+    async getPasswordResetToken(token: string): Promise<{ userId: string; token: string } | null> {
+        try {
+            const user = await prisma.user.findFirst({
+                where: {
+                    resetToken: token,
+                    resetTokenExpiry: {
+                        gt: new Date()
+                    }
+                },
+                select: {
+                    id: true,
+                    resetToken: true
+                }
+            });
+
+            return user ? { userId: user.id, token: user.resetToken! } : null;
+        } catch (error) {
+            throw new Error("Error fetching password reset token: " + error);
+        }
+    }
+
+    async deleteResetToken(userId: string, token: string): Promise<void> {
+        try {
+            await prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    resetToken: null,
+                    resetTokenExpiry: null
+                }
+            });
+            console.log("Reset token deleted successfully");
+        } catch (error) {
+            throw new Error("Error deleting reset token: " + error);
         }
     }
 }

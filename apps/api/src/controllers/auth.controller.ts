@@ -102,6 +102,36 @@ export class AuthController {
         }
     };
 
+    forgotPassword = async (req: Request, res: Response) => {
+        try {
+            const { email } = req.body;
+            await this.authService.forgotPassword(email);
+            res.status(200).json({ message: "Password reset email sent" });
+        } catch (error) {
+            res.status(500).json({ error: error });
+        }
+    }
+
+    resetPassword = async (req: Request, res: Response) => {
+        try {
+            const { password } = req.body;
+            const token = req.params.token;
+
+            if(!token) {
+                res.status(400).json({ 
+                    message: "Reset token is required",
+                    error: "Missing reset token" 
+                });
+                return;
+            }
+
+            await this.authService.resetPassword(token, password);
+            res.status(200).json({ message: "Password reset successfully" });
+        } catch (error) {
+            res.status(500).json({ error: error });
+        }
+    }
+
     oauthRedirect = async (req: Request, res: Response) => {
         try {
             const provider = req.params.provider;

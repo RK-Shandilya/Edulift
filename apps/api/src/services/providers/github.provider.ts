@@ -37,18 +37,16 @@ export default class GithubProvider implements IOAuthProvider {
             );
             return response.data;
         } catch (error) {
-            console.error('Google token error:', error);
-            throw new Error('Failed to get Google tokens');
+            console.error('Github token error:', error);
+            throw new Error('Failed to get Github tokens');
         }
     }
     async getUserProfile(accessToken: string): Promise<OAuthUserProfile> {
         try {
             const response = await axios.get<{
-                sub: string;
-                email: string;
-                given_name?: string;
-                family_name?: string;
-                picture?: string;
+                id: string;
+                email?: string;
+                login: string;
                 name: string;
             }>(this.config.userInfoUrl, 
                 {
@@ -88,16 +86,15 @@ export default class GithubProvider implements IOAuthProvider {
             }
 
             return {
-                id: response.data.sub.toString(),
+                id: response.data.id.toString(),
                 email: primaryEmail.email,
-                firstName: firstName || response.data.given_name,
+                firstName: firstName || response.data.login,
                 lastName: lastName,
-                picture: response.data.picture,
             };
 
         } catch (error) {
-            console.error('Google profile error:', error);
-            throw new Error('Failed to get Google profile');
+            console.error('Github profile error:', error);
+            throw new Error('Failed to get Github profile');
         }
     }
 }

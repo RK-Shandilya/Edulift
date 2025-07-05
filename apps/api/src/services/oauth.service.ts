@@ -1,4 +1,4 @@
-import { IOAuthProvider, userRegisterData } from "@repo/types/index";
+import { IOAuthProvider, UserRegisterData } from "@repo/types/index";
 import AuthService from "./auth.service";
 import AuthRepository from "../repositories/auth.repository";
 import GoogleProvider from "./providers/google.provider";
@@ -25,7 +25,7 @@ export default class OAuthService {
     }
 
     async handleCallback(providerName: string | undefined, code: unknown): Promise<{
-        user: Omit<userRegisterData, 'password'>,
+        user: Omit<UserRegisterData, 'password'>,
         tokens: { accessToken: string, refreshToken: string}
     }> {
         if (!providerName) {

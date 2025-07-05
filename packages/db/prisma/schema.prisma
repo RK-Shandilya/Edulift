@@ -22,6 +22,8 @@ model User {
   password       String
   refreshToken   RefreshToken[]
   accountType    AccountType     @default(Student)
+  resetToken           String?
+  resetTokenExpiry     DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   isActive       Boolean  @default(true)

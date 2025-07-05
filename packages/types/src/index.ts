@@ -1,52 +1,61 @@
-export interface userRegisterData {
+export interface BaseUser {
     id: string;
     email: string;
-    password: string;
     firstName: string;
     lastName: string;
 }
 
-export interface userLoginData {
-    email: string;
+export interface User extends BaseUser {
     password: string;
-    accessToken?: string;
-    refreshToken?: string;
+    resetToken?: string;
+    resetTokenExpiry?: Date;
 }
 
-export interface loginResponse extends Omit<userRegisterData, 'password'> {
+export interface UserRegisterData extends BaseUser {
+    password: string;
+}
+
+export interface UserLoginData {
+    email: string;
+    password: string;
+}
+
+export interface LoginResponse extends BaseUser {
     accessToken: string;
     refreshToken: string;
 }
 
 export interface OAuthUserProfile {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  picture?: string;
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    picture?: string;
 }
 
 export interface OAuthTokenResponse {
-  access_token: string;
-  expires_in: number;
-  refresh_token?: string;
-  scope: string;
-  token_type: string;
-  id_token?: string;
+    access_token: string;
+    expires_in: number;
+    refresh_token?: string;
+    scope: string;
+    token_type: string;
+    id_token?: string;
 }
 
 export interface IOAuthProvider {
-  getAuthUrl(): string;
-  getTokens(code: string): Promise<OAuthTokenResponse>;
-  getUserProfile(accessToken: string): Promise<OAuthUserProfile>;
+    getAuthUrl(): string;
+    getTokens(code: string): Promise<OAuthTokenResponse>;
+    getUserProfile(accessToken: string): Promise<OAuthUserProfile>;
 }
 
 export interface EmailOptions {
     to: string;
     templateId: string;
     dynamicTemplateData: {
-      firstName: string;
-      help_center_link? : string;
-      login_link? : string;
+        firstName: string;
+        help_center_link?: string;
+        login_link?: string;
+        resetLink?: string;
+        expirationTime?: string;
     }
 }

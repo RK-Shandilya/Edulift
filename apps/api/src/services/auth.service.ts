@@ -1,8 +1,9 @@
 import AuthRepository from "../repositories/auth.repository";
 import bcrypt from "bcryptjs";
-import { loginResponse, userLoginData, userRegisterData } from "@repo/types/index";
+import { LoginResponse, User, UserLoginData, UserRegisterData } from "@repo/types/index";
 import jwt, { SignOptions} from "jsonwebtoken";
 import { sendEmail } from "../utils/email.util";
+import crypto from "crypto";
 
 export default class AuthService {
     public authRepository;
@@ -10,7 +11,7 @@ export default class AuthService {
         this.authRepository = authRepository;
     }
 
-    async register(userData: userRegisterData): Promise<Omit<userRegisterData, 'password'>> {
+    async register(userData: UserRegisterData): Promise<Omit<UserRegisterData, 'password'>> {
         const userExists = await this.authRepository.getUserByEmail(userData.email);
         if(userExists) {
             throw new Error("User already exists with this email");
@@ -42,7 +43,7 @@ export default class AuthService {
         return userWithoutPassword;
     }
 
-    async login(userData: userLoginData): Promise<loginResponse> {
+    async login(userData: UserLoginData): Promise<LoginResponse> {
         const user = await this.authRepository.getUserByEmail(userData.email);
         if (!user) {
             throw new Error("User not found");
@@ -68,12 +69,49 @@ export default class AuthService {
         };
     }
 
-    async generateToken(user: userRegisterData, expiresIn: string): Promise<string> {
+    async forgotPassword(email: string) : Promise<void> {
+        const user = await this.authRepository.getUserByEmail(email);
+        if(!user) {
+            console.warn(`Password reset attempted for non-existent email: ${email}`);
+            return;
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+        
+        try {
+            await this.authRepository.storeResetToken(user.id, resetToken, resetTokenExpiry);
+            await sendEmail({
+                to: user.email,
+                templateId: process.env.SENDGRID_TEMPLATE_ID!,
+                dynamicTemplateData: {
+                    firstName: user.firstName,
+                    resetLink: `${process.env.APP_URL}/reset-password?token=${resetToken}`,
+                    expirationTime: '15 minutes'
+                }
+            })
+        } catch (error) {
+            console.error("Error sending email:", error);
+        }
+    }
+
+    async resetPassword(resetToken: string, password: string): Promise<void> {
+        const tokenData = await this.authRepository.getPasswordResetToken(resetToken);
+        if (!tokenData) {
+            throw new Error("Invalid or expired reset token");
+        }
+        
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await this.authRepository.updatePassword(tokenData.userId, hashedPassword);
+        await this.authRepository.deleteResetToken(tokenData.userId, resetToken);
+    }
+
+    async generateToken(user: User, expiresIn: string): Promise<string> {
         if (!process.env.JWT_SECRET) {
             throw new Error("JWT_SECRET environment variable is not set");
         }
         const payload = {
-            id: user.id, 
+            id: user.id,
             email: user.email
         }
 
@@ -91,17 +129,5 @@ export default class AuthService {
         const user = await this.authRepository.getUserById(storedToken.userId);
         if (!user) throw new Error("User not found");
         return this.generateToken(user, '15m');
-    }
-
-    async verifyToken(token: string): Promise<any> {
-        if (!process.env.JWT_SECRET) {
-            throw new Error("JWT_SECRET environment variable is not set");
-        }
-        
-        try {
-            return jwt.verify(token, process.env.JWT_SECRET);
-        } catch (error) {
-            throw new Error("Invalid token");
-        }
     }
 }
