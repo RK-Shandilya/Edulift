@@ -14,7 +14,8 @@
   "devDependencies": {
     "@repo/db": "workspace:*",
     "@repo/types": "workspace:*",
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "@types/cors": "^2.8.19"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.5",
@@ -22,6 +23,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^4.2.0",

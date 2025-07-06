@@ -114,7 +114,15 @@ export class AuthController {
 
     resetPassword = async (req: Request, res: Response) => {
         try {
-            const { password } = req.body;
+            const { password, confirmPassword } = req.body;
+            if (confirmPassword !== password) {
+                res.json({
+                    success: false,
+                    message: "Password and Confirm Password Does not Match",
+                });
+                return;
+		    }
+
             const token = req.params.token;
 
             if(!token) {

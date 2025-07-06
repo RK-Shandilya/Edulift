@@ -1,11 +1,16 @@
 import express, { Express } from "express";
 import apiRouter from "./routes";
 import cron from "node-cron";
+import cors from "cors";
 import { cleanOldRefreshTokens } from "./jobs/tokenCleanup.job";
 
 process.loadEnvFile("../../.env");
 const app: Express = express();
 
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api" ,apiRouter);
