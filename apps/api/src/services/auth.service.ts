@@ -72,8 +72,7 @@ export default class AuthService {
     async forgotPassword(email: string) : Promise<void> {
         const user = await this.authRepository.getUserByEmail(email);
         if(!user) {
-            console.warn(`Password reset attempted for non-existent email: ${email}`);
-            return;
+            throw new Error("User not found");
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
@@ -124,10 +123,14 @@ export default class AuthService {
 
     async refreshAccessToken(refreshToken: string): Promise<string> {
         const storedToken = await this.authRepository.getRefreshToken(refreshToken);
-        if (!storedToken) throw new Error("Invalid/expired refresh token");
+        if (!storedToken) throw new Error("Invalid refresh token");
 
         const user = await this.authRepository.getUserById(storedToken.userId);
         if (!user) throw new Error("User not found");
         return this.generateToken(user, '15m');
+    }
+
+    async deleteUser(userId: string): Promise<void> {
+        await this.authRepository.deleteUser(userId);
     }
 }

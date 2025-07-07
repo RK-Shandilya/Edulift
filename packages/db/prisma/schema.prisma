@@ -39,7 +39,7 @@ model RefreshToken {
   revoked   Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  @@map("refresh_tokens")
+  @@map("refreshToken")
 }
 
 enum AccountType {

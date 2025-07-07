@@ -12,8 +12,8 @@ authRouter.post("/", zodValidator(registerSchema),authController.register);
 authRouter.post("/login", zodValidator(loginSchema), authController.login);
 authRouter.post("/refresh-token", zodValidator(refreshTokenSchema),authController.refreshToken);
 authRouter.post("/forgot-password", zodValidator(forgotPasswordSchema), authController.forgotPassword);
-authRouter.post("/reset-password:token", zodValidator(resetPasswordSchema), authController.resetPassword);
-
+authRouter.post("/reset-password/:token", zodValidator(resetPasswordSchema), authController.resetPassword);
+authRouter.delete("/delete-user", authController.deleteUser);
 authRouter.post("/logout", verifyToken, zodValidator(refreshTokenSchema), authController.logout);
 
 authRouter.get("/:provider", authController.oauthRedirect);

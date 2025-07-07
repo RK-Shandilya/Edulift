@@ -87,7 +87,9 @@ export class AuthController {
 
             res.status(200).json({ message: "Token refreshed", accessToken: accessToken  });
         } catch (error) {
-            res.status(401).json({ error: error });
+            res.status(401).json({ 
+                error: error instanceof Error ? error.message : String(error) 
+            });
         }
     };
 
@@ -96,9 +98,11 @@ export class AuthController {
             const { refreshToken } = req.body;
             await this.authService.logout(refreshToken);
             res.clearCookie('accessToken');
-            res.status(200).json({ message: "Logged out" });
+            res.status(200).json({ message: "User logged out successfully" });
         } catch (error) {
-            res.status(500).json({ error: error });
+            res.status(401).json({ 
+                error: error instanceof Error ? error.message : String(error) 
+            });
         }
     };
 
@@ -108,23 +112,27 @@ export class AuthController {
             await this.authService.forgotPassword(email);
             res.status(200).json({ message: "Password reset email sent" });
         } catch (error) {
-            res.status(500).json({ error: error });
+            res.status(500).json({ 
+                error: error instanceof Error ? error.message : String(error) 
+            });
         }
     }
 
     resetPassword = async (req: Request, res: Response) => {
         try {
             const { password, confirmPassword } = req.body;
+            console.log(password, confirmPassword);
             if (confirmPassword !== password) {
-                res.json({
+                res.status(400).json({
                     success: false,
                     message: "Password and Confirm Password Does not Match",
                 });
                 return;
 		    }
+            console.log("password match");
 
             const token = req.params.token;
-
+            console.log(token);
             if(!token) {
                 res.status(400).json({ 
                     message: "Reset token is required",
@@ -136,7 +144,9 @@ export class AuthController {
             await this.authService.resetPassword(token, password);
             res.status(200).json({ message: "Password reset successfully" });
         } catch (error) {
-            res.status(500).json({ error: error });
+            res.status(500).json({ 
+                error: error instanceof Error ? error.message : String(error) 
+            });
         }
     }
 
@@ -192,6 +202,15 @@ export class AuthController {
                 message: "OAuth authentication failed",
                 error: error instanceof Error ? error.message : String(error)
             });
+        }
+    }
+    deleteUser = async (req: Request, res: Response) => {
+        try {
+            const { userId } = req.body;
+            await this.authService.deleteUser(userId);
+            res.status(200).json({ message: "User deleted successfully" });
+        } catch (error) {
+            res.status(500).json({ error: error });
         }
     }
 }

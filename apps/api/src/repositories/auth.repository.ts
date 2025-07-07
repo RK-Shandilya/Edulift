@@ -104,14 +104,14 @@ export default class AuthRepository {
 
     async deleteRefreshToken(token: string): Promise<void> {
         try {
-            await prisma.refreshToken.update({
-                where: {
-                    token: token
+            await prisma.refreshToken.updateMany({
+                where: { 
+                    token: token,
+                    revoked: false
                 },
-                data: {
-                    revoked: true
-                }
+                data: { revoked: true }
             });
+            
             console.log("Refresh token deleted successfully");
         } catch (error) {
             throw new Error("Error deleting refresh token: " + error);
@@ -199,6 +199,18 @@ export default class AuthRepository {
             console.log("Reset token deleted successfully");
         } catch (error) {
             throw new Error("Error deleting reset token: " + error);
+        }
+    }
+    async deleteUser(userId: string): Promise<void> {
+        try {
+            await prisma.user.delete({
+                where: {
+                    id: userId
+                }
+            });
+            console.log("User deleted successfully");
+        } catch (error) {
+            throw new Error("Error deleting user: " + error);
         }
     }
 }
