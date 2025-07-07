@@ -15,7 +15,6 @@ export default class GoogleProvider implements IOAuthProvider {
     }
 
     getAuthUrl(): string {
-        console.log(this.config);
         const params = new URLSearchParams({
             client_id: this.config.clientId ?? "",
             redirect_uri: this.config.redirectUri ?? "",
