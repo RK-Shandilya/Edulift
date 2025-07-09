@@ -9,10 +9,10 @@ export interface User extends BaseUser {
     password: string;
     resetToken?: string;
     resetTokenExpiry?: Date;
-    accountType? : string;
+    accountType?: string;
     isActive?: boolean;
     isApproved?: boolean;
-    image? : string;
+    image?: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -67,70 +67,72 @@ export interface EmailOptions {
 }
 
 export interface ICourse {
-  id? :string,
-  courseName:string,
-  courseDescription:string
-  whatYouWillLearn? :string;
-  price: number;
-  thumbnail? :string
-  tag: string[]
-  instructions :string[]
-  status : "Draft" | "Published"
-  instructorId :string
-  createdAt?: Date;
-  updatedAt?: Date;
+    id?: string;
+    courseName: string;
+    courseDescription: string;
+    whatYouWillLearn?: string | null;
+    price: number;
+    thumbnail?: string | null;
+    tag: string[];
+    instructions: string[];
+    status: "Draft" | "Published";
+    instructorId: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    categoryId?: string | null;
+}
 
-  studentsEnrolled?: User[]
-  category?: ICategory
-  categoryId? : string
-  sections? : ISection[]
-  ratings?  : IRatingAndReview[]
-  CourseProgress? : ICourseProgress[]
+export interface ICouseRelations extends ICourse {
+    studentsEnrolled?: User[];
+    category?: ICategory;
+    sections?: ISection[];
+    ratings?: IRatingAndReview[];
+    CourseProgress?: ICourseProgress[];
 }
 
 export interface ICategory {
-  id? :string;
-  categoryName: string;
-  description: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+    id?: string;
+    name: string;
+    description?: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface ISection {
-  id? :string;
-  sectionName: string;
-  courseId: string;
-  subsections? : ISubsection[]
-  createdAt?: Date;
-  updatedAt?: Date;
+    id?: string;
+    sectionName: string;
+    courseId: string;
+    subsections?: ISubsection[];
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface ISubsection {
-  id? :string;
-  title: string;
-  sectionId: string;
-  courseId: string;
-  timeDuration: number;
-  courseProgressId?: String;
-  videoUrl: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+    id?: string;
+    title: string;
+    sectionId: string;
+    timeDuration: string;
+    description?: string | null;
+    videoUrl: string;
+    courseProgressId?: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface IRatingAndReview {
-  id? :string;
-  rating: number;
-  review: string;
-  courseId: string;
-  userId: string;
-  createdAt?: Date;
+    id?: string;
+    rating: number;
+    review: string;
+    courseId: string;
+    userId: string;
+    createdAt?: Date;
 }
 
 export interface ICourseProgress {
-  id? :string;
-  courseId: string;
-  userId: string;
-  completedSubsections: string[];
-  createdAt?: Date;
-  updatedAt?: Date;
+    id?: string;
+    courseId: string;
+    userId: string;
+    completedVideos?: ISubsection[];
+    createdAt?: Date;
+    updatedAt?: Date;
 }

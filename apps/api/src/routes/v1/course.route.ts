@@ -1,9 +1,9 @@
 import { Router } from "express";
-// import CourseController from "../../controllers/course.controller";
+import CourseController from "../../controllers/course.controller";
 
 const courseRouter : Router = Router();
-// const courseController = new CourseController();
+const courseController = new CourseController();
 
-// courseRouter.post("/", courseController.createCourse);
+courseRouter.post("/", courseController.createCourse);
 
 export default courseRouter

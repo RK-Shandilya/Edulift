@@ -121,7 +121,6 @@ export class AuthController {
     resetPassword = async (req: Request, res: Response) => {
         try {
             const { password, confirmPassword } = req.body;
-            console.log(password, confirmPassword);
             if (confirmPassword !== password) {
                 res.status(400).json({
                     success: false,
@@ -129,10 +128,8 @@ export class AuthController {
                 });
                 return;
 		    }
-            console.log("password match");
 
             const token = req.params.token;
-            console.log(token);
             if(!token) {
                 res.status(400).json({ 
                     message: "Reset token is required",
