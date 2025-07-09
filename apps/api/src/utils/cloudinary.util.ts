@@ -1,14 +1,11 @@
 import {v2 as cloudinary} from "cloudinary"
 
-export default async function uploadToCloudinary(imagePath: string): Promise<string> {
-    const options = {
-        use_filename: true,
-        unique_filename: false,
-        overwrite: true
-    }
-
+export default async function uploadToCloudinary(file: Express.Multer.File): Promise<string> {
     try {
-        const result = await cloudinary.uploader.upload(imagePath, options);
+        const result = await cloudinary.uploader.upload(file.path, {
+            folder: "edulift",
+            resource_type: "auto",
+        });
         return result.secure_url;
     } catch(error) {
         throw new Error("Error uploading image to Cloudinary: " + error)

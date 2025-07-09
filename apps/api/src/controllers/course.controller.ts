@@ -17,7 +17,7 @@ export default class CourseController {
             let thumbnailUrl: string | undefined;
             
             if(thumbnail) {
-                thumbnailUrl = await uploadToCloudinary(req.file?.path!);
+                thumbnailUrl = await uploadToCloudinary(thumbnail);
             }
             
             const course = await this.courseService.createCourse({
