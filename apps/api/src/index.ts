@@ -3,6 +3,7 @@ import apiRouter from "./routes";
 import cron from "node-cron";
 import cors from "cors";
 import { cleanOldRefreshTokens } from "./jobs/tokenCleanup.job";
+import multer from "multer";
 
 process.loadEnvFile("../../.env");
 const app: Express = express();
@@ -11,8 +12,11 @@ app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true,
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(multer().any());
+
 app.use("/api" ,apiRouter);
 const PORT = process.env.PORT || 3000;
 

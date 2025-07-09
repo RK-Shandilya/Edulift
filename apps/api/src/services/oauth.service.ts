@@ -41,6 +41,7 @@ export default class OAuthService {
             const { access_token } = await provider.getTokens(code);
             const userProfile = await provider.getUserProfile(access_token);
             let user = await this.authService.authRepository.getUserByEmail(userProfile.email);
+
             if (!user) {
                 user = await this.authService.authRepository.register({
                     id: userProfile.id,
