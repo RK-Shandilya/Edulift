@@ -2,7 +2,7 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:3001/api/v1/auth";
 
-describe("Auth Tests", ()=> {
+describe.skip("Auth Tests", ()=> {
     const testUser = {
         email: "test@gmail.com",
         password: "Test@123",

@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -9,154 +8,130 @@ datasource db {
 }
 
 model User {
-  id               String      @id @default(uuid())
-  firstName        String
-  lastName         String
-  email            String      @unique
-  password         String
-  accountType      AccountType @default(Student)
-  isActive         Boolean     @default(true)
-  isApproved       Boolean     @default(true)
-  image            String?
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id                String    @id @default(cuid())
+  email             String    @unique
+  firstName         String
+  lastName          String
+  password          String
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  accountType       String?   @default("Student")
+  isActive          Boolean   @default(true)
+  isApproved        Boolean   @default(false)
+  image             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  profile         Profile?
-  coursesCreated  Course[]          @relation("InstructorCourses")
-  enrolledCourses Course[]          @relation("EnrolledCourses")
-  refreshTokens   RefreshToken[]
-  ratings         RatingAndReview[]
-  courseProgress  CourseProgress[]
+  coursesCreated    Course[]  @relation("InstructorCourses")
+  coursesEnrolled    Course[]  @relation("EnrolledStudents")
+  ratings           RatingAndReview[]
+  courseProgress    CourseProgress[]
 
   @@map("users")
 }
 
-model Profile {
-  id            String  @id @default(uuid())
-  gender        String?
-  dateOfBirth   String?
-  about         String?
-  contactNumber Int?
-  user          User    @relation(fields: [userId], references: [id])
-  userId        String  @unique
-
-  @@map("profiles")
-}
-
 model Course {
-  id                String       @id @default(uuid())
+  id                String    @id @default(cuid())
   courseName        String
   courseDescription String
   whatYouWillLearn  String?
-  price             Int
+  price             Float
   thumbnail         String?
   tag               String[]
   instructions      String[]
   status            CourseStatus @default(Draft)
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  // Relations
-  instructor       User              @relation("InstructorCourses", fields: [instructorId], references: [id])
-  instructorId     String
-  studentsEnrolled User[]            @relation("EnrolledCourses")
-  category         Category?         @relation(fields: [categoryId], references: [id])
-  categoryId       String?
-  sections         Section[]
-  ratings          RatingAndReview[]
-  CourseProgress   CourseProgress[]
+  instructorId      String
+  categoryId        String?
+
+  instructor        User      @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
+  category          Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  studentsEnrolled  User[]    @relation("EnrolledStudents")
+  sections          Section[]
+  ratings           RatingAndReview[]
+  courseProgress    CourseProgress[]
 
   @@map("courses")
 }
 
 model Category {
-  id          String   @id @default(uuid())
-  name        String
+  id          String    @id @default(cuid())
+  name        String    @unique
   description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   courses     Course[]
 
   @@map("categories")
 }
 
 model Section {
-  id          String       @id @default(uuid())
+  id          String    @id @default(cuid())
   sectionName String
-  course      Course       @relation(fields: [courseId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   courseId    String
-  subSections SubSection[]
+
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  subsections Subsection[]
 
   @@map("sections")
 }
 
-model SubSection {
-  id               String          @id @default(uuid())
-  title            String
-  timeDuration     String
-  description      String
-  videoUrl         String
-  section          Section         @relation(fields: [sectionId], references: [id])
-  sectionId        String
-  CourseProgress   CourseProgress? @relation(fields: [courseProgressId], references: [id])
-  courseProgressId String?
+model Subsection {
+  id           String    @id @default(cuid())
+  title        String
+  timeDuration String
+  description  String?
+  videoUrl     String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sectionId    String
+
+  section      Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  completedBy  CourseProgress[] @relation("CompletedVideos")
 
   @@map("subsections")
 }
 
 model RatingAndReview {
-  id       String @id @default(uuid())
-  rating   Int
-  review   String
-  user     User   @relation(fields: [userId], references: [id])
-  userId   String
-  course   Course @relation(fields: [courseId], references: [id])
-  courseId String
-
+  id        String   @id @default(cuid())
+  rating    Int      @db.SmallInt
+  review    String
   createdAt DateTime @default(now())
 
-  @@map("ratings")
+  courseId  String
+  userId    String
+
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@map("ratings_and_reviews")
 }
 
 model CourseProgress {
-  id              String       @id @default(uuid())
-  user            User         @relation(fields: [userId], references: [id])
-  userId          String
-  course          Course       @relation(fields: [courseId], references: [id])
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
   courseId        String
-  completedVideos SubSection[]
+  userId          String
 
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completedVideos Subsection[] @relation("CompletedVideos")
+
+  @@unique([courseId, userId])
   @@map("course_progress")
-}
-
-model OTP {
-  id        String   @id @default(uuid())
-  email     String
-  otp       String
-  createdAt DateTime @default(now())
-
-  @@map("otps")
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@map("refresh_tokens")
 }
 
 enum CourseStatus {
   Draft
   Published
-}
-
-enum AccountType {
-  Student
-  Instructor
-  Admin
 }
