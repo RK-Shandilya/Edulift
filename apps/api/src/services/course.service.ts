@@ -41,6 +41,18 @@ export default class CourseService {
             throw new Error("All Fields are Mandatory");
         }
 
+        const instructorExists = await this.courseRepository.checkInstructorExists(userId);
+        if (!instructorExists) {
+            throw new Error("Instructor not found or user is not an instructor");
+        }
+
+        if (data.categoryId) {
+            const categoryExists = await this.courseRepository.checkCategoryExists(data.categoryId);
+            if (!categoryExists) {
+                throw new Error("Category not found");
+            }
+        }
+
         const courseData = {
             ...data,
             tag,
@@ -63,19 +75,29 @@ export default class CourseService {
         return await this.courseRepository.getInstructorCourses(instructorId);
     }
 
-    async updateCourse(courseId: string, updates: Partial<ICourse>): Promise<ICourse> {
+    async updateCourse(courseId: string, updates: Partial<ICourse>, userId: string | undefined): Promise<ICourse> {
+        if(!userId) {
+            throw new Error("Unauthorized")
+        }
         const existingCourse = await this.courseRepository.getCourseById(courseId);
         if (!existingCourse) {
             throw new Error("Course not found");
+        }
+        if (existingCourse.instructorId !== userId) {
+            throw new Error("Unauthorized: You don't own this course");
         }
 
         return await this.courseRepository.updateCourse(courseId, updates);
     }
 
-    async deleteCourse(courseId: string): Promise<void> {
+    async deleteCourse(courseId: string, userId: string| undefined): Promise<void> {
         const existingCourse = await this.courseRepository.getCourseById(courseId);
         if (!existingCourse) {
             throw new Error("Course not found");
+        }
+
+        if (existingCourse.instructorId !== userId) {
+            throw new Error("Unauthorized: You don't own this course");
         }
 
         return await this.courseRepository.deleteCourse(courseId);

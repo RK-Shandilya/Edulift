@@ -170,7 +170,7 @@ export default class CourseController {
                 updates.instructions = JSON.parse(updates.instructions);
             }
 
-            const updatedCourse = await this.courseService.updateCourse(courseId, updates);
+            const updatedCourse = await this.courseService.updateCourse(courseId, updates, req.userId);
             
             res.status(200).json({
                 success: true,
@@ -208,7 +208,7 @@ export default class CourseController {
                 return;
             }
 
-            await this.courseService.deleteCourse(courseId);
+            await this.courseService.deleteCourse(courseId, req.userId);
             
             res.status(200).json({
                 success: true,

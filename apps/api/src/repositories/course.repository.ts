@@ -8,57 +8,13 @@ export default class CourseRepository {
         try {
             const { whatYouWillLearn, categoryId, ...restData } = data;
             
-            if (categoryId) {
-                const categoryExists = await prisma.category.findUnique({
-                    where: { id: categoryId }
-                });
-                if (!categoryExists) {
-                    throw new Error("Category Details Not Found");
+            const course = await prisma.course.create({
+                data: {
+                    ...restData,
+                    whatYouWillLearn: whatYouWillLearn || null,
+                    categoryId: categoryId || null,
+                    instructorId: userId
                 }
-            }
-
-            const instructorDetails = await prisma.user.findUnique({
-                where: { 
-                    id: userId,
-                    accountType: "Instructor" 
-                }
-            });
-
-            if (!instructorDetails) {
-                throw new Error("Instructor Details Not Found");
-            }
-
-            const course = await prisma.$transaction(async (tx) => {
-                const newCourse = await tx.course.create({
-                    data: {
-                        ...restData,
-                        whatYouWillLearn: whatYouWillLearn || null,
-                        categoryId: categoryId || null,
-                        instructorId: userId
-                    }
-                });
-
-                await tx.user.update({
-                    where: { id: userId },
-                    data: {
-                        coursesCreated : {
-                            connect: { id: newCourse.id }
-                        }
-                    }
-                });
-
-                if (categoryId) {
-                    await tx.category.update({
-                        where: { id: categoryId },
-                        data: {
-                            courses: {
-                                connect: { id: newCourse.id }
-                            }
-                        }
-                    });
-                }
-
-                return newCourse;
             });
             
             return {
@@ -115,7 +71,7 @@ export default class CourseRepository {
                     category: true,
                     sections: {
                         include: {
-                            subSections: true
+                            subsections: true
                         }
                     }
                 }
@@ -175,53 +131,87 @@ export default class CourseRepository {
 
     async deleteCourse(courseId: string): Promise<void> {
         try {
-            await prisma.$transaction(async (tx) => {
-                const users = await tx.user.findMany({
-                    where: {
-                        enrolledCourses: {
-                            some: {
-                                id:courseId
-                            }
-                        }
-                    },
-                    select: {id: true}
-                })
-
-                for(const user of users) {
-                    await tx.user.update({
-                        where: { id: user.id },
-                        data: {
-                            enrolledCourses: {
-                                disconnect: {
-                                    id: courseId
-                                }
-                            }
-                        }
-                    });
-                }
-
-                await tx.subSection.deleteMany({
-                    where: {
-                        section: {
-                            courseId: courseId
-                        }
-                    }
-                })
-
-                await tx.section.deleteMany({
-                    where: {
-                        courseId: courseId
-                    }
-                })
-
-                await tx.course.delete({
-                    where: {
-                        id: courseId
-                    }
-                })
-            })
+            await prisma.course.delete({
+                where: { id: courseId }
+            });
         } catch (error) {
             throw new Error("Error deleting course: " + (error instanceof Error ? error.message : "Unknown error"));
+        }
+    }
+
+    async mostSellingCourses(): Promise<ICourse[]> {
+        try {
+            const courses = await prisma.course.findMany({
+                where: {
+                    status: "Published"
+                },
+                orderBy: {
+                    studentsEnrolled: {
+                        _count: 'desc'
+                    }
+                },
+                take: 10,
+                include: {
+                    instructor: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true
+                        }
+                    }
+                }
+            });
+
+            return courses.map(course => ({
+                ...course,
+                whatYouWillLearn: course.whatYouWillLearn ?? undefined,
+                thumbnail: course.thumbnail ?? undefined,
+                categoryId: course.categoryId ?? undefined
+            }));
+        } catch (error) {
+            throw new Error("Error fetching most selling courses: " + (error instanceof Error ? error.message : "Unknown error"));
+        }
+    }
+
+    async checkCourseExists(courseId: string): Promise<ICourse | null> {
+        try {
+            const course = await prisma.course.findUnique({
+                where: { id: courseId }
+            });
+            return course ? {
+                ...course,
+                whatYouWillLearn: course.whatYouWillLearn ?? undefined,
+                thumbnail: course.thumbnail ?? undefined,
+                categoryId: course.categoryId ?? undefined
+            } : null;
+        } catch (error) {
+            throw new Error("Error checking course existence: " + (error instanceof Error ? error.message : "Unknown error"));
+        }
+    }
+
+    async checkCategoryExists(categoryId: string): Promise<boolean> {
+        try {
+            const category = await prisma.category.findUnique({
+                where: { id: categoryId }
+            });
+            return !!category;
+        } catch (error) {
+            throw new Error("Error checking category existence: " + (error instanceof Error ? error.message : "Unknown error"));
+        }
+    }
+
+    async checkInstructorExists(userId: string): Promise<boolean> {
+        try {
+            const instructor = await prisma.user.findUnique({
+                where: { 
+                    id: userId,
+                    accountType: "Instructor" 
+                }
+            });
+            return !!instructor;
+        } catch (error) {
+            throw new Error("Error checking instructor existence: " + (error instanceof Error ? error.message : "Unknown error"));
         }
     }
 }

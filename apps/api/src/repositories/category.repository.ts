@@ -19,4 +19,12 @@ export default class CategoryRepository {
     async showAllCategories(): Promise<ICategory[]> {
         return await prisma.category.findMany();
     }
+
+    async getCategoryById(categoryId: string): Promise<ICategory | null> {
+        return await prisma.category.findUnique({
+            where: {
+                id: categoryId,
+            },
+        });
+    }
 }

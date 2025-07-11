@@ -103,6 +103,7 @@ export interface ISection {
     sectionName: string;
     courseId: string;
     subsections?: ISubsection[];
+    course?: ICouseRelations;
     createdAt?: Date;
     updatedAt?: Date;
 }
