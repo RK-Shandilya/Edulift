@@ -114,7 +114,7 @@ export interface ISubsection {
     sectionId: string;
     timeDuration: string;
     description?: string | null;
-    videoUrl: string;
+    videoUrls: string[];
     courseProgressId?: string | null;
     createdAt?: Date;
     updatedAt?: Date;

@@ -8,6 +8,8 @@ import multer from "multer";
 process.loadEnvFile("../../.env");
 const app: Express = express();
 
+ const uploader = multer({ dest: 'tmp/'});
+
 app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true,
@@ -15,7 +17,6 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(multer().any());
 
 app.use("/api" ,apiRouter);
 const PORT = process.env.PORT || 3000;
