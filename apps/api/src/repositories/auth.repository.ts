@@ -1,5 +1,5 @@
 import { User, UserRegisterData } from "@repo/types/index"
-import { prisma } from "@repo/db/index";
+import prisma from "@repo/db/index";
 
 export default class AuthRepository {
 

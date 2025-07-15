@@ -45,3 +45,25 @@ export const isInstructor = async (req: Request, res: Response, next: NextFuncti
         res.status(401).json({ message: "Invalid or expired token" });
     }
 }
+
+export const isAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const authRepository = new AuthRepository();
+        const user = await authRepository.getUserById(req.userId!);
+
+        if (!user) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+
+        if (user.accountType !== "admin") {
+            res.status(403).json({ message: "Access denied" });
+            return;
+        }
+
+        next();
+    } catch (error) {
+        console.error("Error verifying token:", error);
+        res.status(401).json({ message: "Invalid or expired token" });
+    }
+}

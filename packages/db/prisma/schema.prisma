@@ -26,8 +26,21 @@ model User {
   coursesEnrolled    Course[]  @relation("EnrolledStudents")
   ratings           RatingAndReview[]
   courseProgress    CourseProgress[]
+  refreshTokens    RefreshToken[]
 
   @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("refreshToken")
 }
 
 model Course {
@@ -87,7 +100,7 @@ model Subsection {
   title        String
   timeDuration String
   description  String?
-  videos       Video[]
+  videoUrls    String[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -97,19 +110,6 @@ model Subsection {
   completedBy  CourseProgress[] @relation("CompletedVideos")
 
   @@map("subsections")
-}
-
-model Video {
-  id        String @id @default(cuid())
-  title     String
-  url       String
-  publicId  String
-  duration  String?
-  order     Int          @default(0)
-  createdAt DateTime @default(now())
-  subsectionId String
-  subsection Subsection @relation(fields: [subsectionId], references: [id], onDelete: Cascade)
-  @@map("videos")
 }
 
 model RatingAndReview {

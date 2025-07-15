@@ -2,9 +2,9 @@
   "name": "@repo/db",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "exports": {
-    "./*": "./src/*.ts"
+    "./*": "./src/index.ts"
   },
   "scripts": {
     "dev": "tsc -b && node dist/index.js",
@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
     "prisma": "^6.10.1"
   }
 }

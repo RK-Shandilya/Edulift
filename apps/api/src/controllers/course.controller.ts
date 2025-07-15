@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import CourseService from "../services/course.service";
 import CourseRepository from "../repositories/course.repository";
-import uploadToCloudinary from "../utils/cloudinary.util";
+import { uploadToCloudinary } from "../utils/cloudinary.util";
 
 const courseService = new CourseService(new CourseRepository());
 
@@ -17,7 +17,8 @@ export default class CourseController {
             let thumbnailUrl: string | undefined;
             
             if(thumbnail) {
-                thumbnailUrl = await uploadToCloudinary(thumbnail);
+                const {url} = await uploadToCloudinary(thumbnail);
+                thumbnailUrl = url;
             }
 
             const course = await this.courseService.createCourse({
@@ -31,37 +32,10 @@ export default class CourseController {
                 data: course 
             });
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Course creation failed";
-            
-            // Handle specific error cases
-            if (errorMessage.includes("All Fields are Mandatory")) {
-                res.status(400).json({ 
-                    success: false,
-                    message: errorMessage
-                });
-                return;
-            }
-            
-            if (errorMessage.includes("Unauthorized")) {
-                res.status(401).json({ 
-                    success: false,
-                    message: errorMessage
-                });
-                return;
-            }
-            
-            if (errorMessage.includes("Not Found")) {
-                res.status(404).json({ 
-                    success: false,
-                    message: errorMessage
-                });
-                return;
-            }
-            
             res.status(500).json({ 
                 success: false,
                 message: "Failed to create course",
-                error: errorMessage
+                error: error instanceof Error ? error.message : "Unknown error"
             });
         }
     }
@@ -146,7 +120,7 @@ export default class CourseController {
 
     editCourse = async (req: Request, res: Response) => {
         try {
-            const { courseId } = req.body;
+            const courseId = req.params.courseId;
             const updates = req.body;
             
             if (!courseId) {
@@ -157,7 +131,6 @@ export default class CourseController {
                 return;
             }
 
-            // Handle thumbnail update if new file is uploaded
             if (req.file) {
                 const thumbnailUrl = await uploadToCloudinary(req.file);
                 updates.thumbnail = thumbnailUrl;
@@ -198,7 +171,7 @@ export default class CourseController {
 
     deleteCourse = async (req: Request, res: Response) => {
         try {
-            const { courseId } = req.body;
+            const courseId = req.params.courseId;
             
             if (!courseId) {
                 res.status(400).json({

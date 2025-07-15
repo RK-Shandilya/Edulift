@@ -3,12 +3,10 @@ import apiRouter from "./routes";
 import cron from "node-cron";
 import cors from "cors";
 import { cleanOldRefreshTokens } from "./jobs/tokenCleanup.job";
-import multer from "multer";
+import cloudinaryConnect from "./config/cloudinary.config";
 
 process.loadEnvFile("../../.env");
 const app: Express = express();
-
- const uploader = multer({ dest: 'tmp/'});
 
 app.use(cors({
     origin: 'http://localhost:3000',
@@ -17,6 +15,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+cloudinaryConnect();
 
 app.use("/api" ,apiRouter);
 const PORT = process.env.PORT || 3000;

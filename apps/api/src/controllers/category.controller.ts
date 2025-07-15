@@ -25,6 +25,38 @@ export default class Category {
         }
     }
 
+    updateCategory = async (req: Request, res:Response): Promise<void> => {
+        try {
+            const categoryId = req.params.categoryId;
+            const category = await this.categoryService.updateCategory(categoryId, req.body);
+            res.status(200).json({
+                success: true,
+                message: "Category updated successfully",
+                data: category
+            })
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: "Error updating category",
+            })
+        }
+    }
+
+    deleteCategory = async (req: Request, res: Response): Promise<void> => {
+        try {
+            await this.categoryService.deleteCategory(req.params.categoryId);
+            res.status(200).json({
+                success: true,
+                message: "Category deleted successfully"
+            })
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: "Error deleting category",
+            })
+        }
+    }
+
     showAllCategories = async (req: Request, res:Response): Promise<void> => {
         try {
             const categories = await this.categoryService.showAllCategories();

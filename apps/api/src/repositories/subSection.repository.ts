@@ -1,4 +1,4 @@
-import { prisma } from "@repo/db/index";
+import prisma from "@repo/db/index";
 import { ISection, ISubsection } from "@repo/types/index";
 
 export default class SubSectionRepository {
@@ -44,18 +44,11 @@ export default class SubSectionRepository {
                 throw new Error("Subsection not found");
             }
 
-            const updateData: any = {};
-            
-            if (data.title !== undefined) updateData.title = data.title;
-            if (data.timeDuration !== undefined) updateData.timeDuration = data.timeDuration;
-            if (data.description !== undefined) updateData.description = data.description;
-            if (data.videoUrls !== undefined) updateData.videoUrls = data.videoUrls;
-
             const subSection = await prisma.subsection.update({
                 where: {
                     id: subSectionId
                 },
-                data: updateData
+                data: data
             });
             
             return subSection;

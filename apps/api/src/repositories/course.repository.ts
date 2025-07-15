@@ -1,4 +1,4 @@
-import { prisma } from "@repo/db/index";
+import prisma from "@repo/db/index";
 import { ICourse } from "@repo/types/index";
 
 export default class CourseRepository {

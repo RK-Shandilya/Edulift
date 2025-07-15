@@ -1,4 +1,4 @@
-import { prisma } from "@repo/db/index";
+import prisma from "@repo/db/index";
 import { ICategory } from "@repo/types/index";
 
 export default class CategoryRepository {
@@ -26,5 +26,28 @@ export default class CategoryRepository {
                 id: categoryId,
             },
         });
+    }
+
+    async updateCategory(categoryId: string, data: {
+        name: string;
+        description?: string;
+    }): Promise<ICategory> {
+        return await prisma.category.update({
+            where: {
+                id: categoryId,
+            },
+            data: {
+                name: data.name,
+                description: data.description,
+            }
+        })
+    }
+
+    async deleteCategory(categoryId: string): Promise<void> {
+        await prisma.category.delete({
+            where: {
+                id: categoryId,
+            }
+        })
     }
 }
