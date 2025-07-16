@@ -4,7 +4,7 @@ import CategoryRepository from "../repositories/category.repository";
 
 const categoryService = new CategoryService(new CategoryRepository());
 
-export default class Category {
+export default class CategoryController {
     private categoryService: CategoryService
     constructor(){
         this.categoryService = categoryService
