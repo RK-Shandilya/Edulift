@@ -8,7 +8,7 @@ export const sendEmail = async (options: EmailOptions) => {
         to: options.to,
         from: process.env.SENDGRID_FROM_EMAIL!,
         templateId: options.templateId,
-        dynamic_template_data: options.dynamicTemplateData
+        dynamic_template_data: options.dynamicTemplateData,
     }
 
     try {

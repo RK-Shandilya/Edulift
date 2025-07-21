@@ -33,6 +33,32 @@ export class AuthController {
         }
     }
 
+    verifyOtp = async (req: Request, res: Response) => {
+        try {
+            await this.authService.verifyOtp(req.body);
+            res.status(200).json({ message: "OTP verified successfully" });
+        } catch (error) {
+            console.error("Error verifying OTP:", error);
+            res.status(500).json({
+                message: "Error verifying OTP",
+                error: error instanceof Error ? error.message : String(error)
+            });
+        }
+    }
+
+    resendOtp = async (req: Request, res: Response) => {
+        try {
+            await this.authService.resendOtp(req.body.email);
+            res.status(200).json({ message: "OTP resent successfully" });
+        } catch (error) {
+            console.error("Error resending OTP:", error);
+            res.status(500).json({
+                message: "Error resending OTP",
+                error: error instanceof Error ? error.message : String(error)
+            });
+        }
+    }
+
     login = async (req: Request, res: Response): Promise<void> => {
         try {
             const loginResponse = await this.authService.login(req.body);

@@ -53,6 +53,42 @@ export default class AuthRepository {
         }
     }
 
+    async verifyOtp(userId: string): Promise<void> {
+        try {
+            await prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    isApproved: true,
+                    otp: null,
+                    otpExpiry: null
+                }
+            });
+            console.log("OTP verified successfully for user:", userId);
+        } catch (error) {
+            throw new Error("Error verifying OTP: " + error);
+        }
+    }
+
+    async regenerateOtp(userId: string): Promise<string | null> {
+        try {
+            const user = await prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    otp: Math.floor(100000 + Math.random() * 900000).toString(),
+                    otpExpiry: new Date(Date.now() + 10 * 60 * 1000)
+                }
+            });
+            console.log("OTP regenerated successfully for user:", userId);
+            return user.otp;
+        } catch (error) {
+            throw new Error("Error regenerating OTP: " + error);
+        }
+    }
+
     async storeRefreshToken(user_id: string, token: string) {
         try {
             await prisma.$transaction(async (tx) => {

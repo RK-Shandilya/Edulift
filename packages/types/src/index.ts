@@ -15,6 +15,8 @@ export interface User extends BaseUser {
     image?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    otp?: string;
+    otpExpiry?: Date;
 }
 
 export interface UserRegisterData extends BaseUser {
@@ -63,6 +65,7 @@ export interface EmailOptions {
         login_link?: string;
         resetLink?: string;
         expirationTime?: string;
+        otp?: string;
     }
 }
 

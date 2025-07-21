@@ -18,13 +18,55 @@ export default class AuthService {
         }
 
         const hashedPassword = await bcrypt.hash(userData.password, 10);
+        const otp = crypto.randomInt(100000, 999999).toString();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
         const userDataWithHashedPassword = {
             ...userData,
-            password: hashedPassword
+            password: hashedPassword,
+            otp: otp,
+            otpExpiry: otpExpiry
         };
-        
+
         const user = await this.authRepository.register(userDataWithHashedPassword);
         const {password, ...userWithoutPassword} = user;
+
+        try {
+            await sendEmail({
+                to: user.email,
+                templateId: process.env.SENDGRID_OTP_TEMPLATE_ID!,
+                dynamicTemplateData: {
+                    firstName: user.firstName,
+                    login_link: process.env.SENDGRID_LOGIN_LINK,
+                    help_center_link: process.env.SENDGRID_HELP_CENTER_LINK,
+                    otp: otp
+                }
+            })
+        } catch (error) {
+            console.error("Error sending email:", error);
+        }
+        return userWithoutPassword;
+    }
+
+    async verifyOtp(data:{email: string, otp: string}): Promise<void> {
+        const user = await this.authRepository.getUserByEmail(data.email);
+        if(!user) {
+            throw new Error("User not found");
+        }
+
+        if(user.isApproved) {
+            throw new Error("User is already verified");
+        }
+
+        if(!user.otp || !user.otpExpiry) {
+            throw new Error("OTP not found");
+        }
+
+        if(user.otp != data.otp || user.otpExpiry < new Date()) {
+            throw new Error("Invalid OTP");
+        }
+
+        await this.authRepository.verifyOtp(user.id);
 
         try {
             await sendEmail({
@@ -39,8 +81,32 @@ export default class AuthService {
         } catch (error) {
             console.error("Error sending email:", error);
         }
+    }
 
-        return userWithoutPassword;
+    async resendOtp(email: string): Promise<void> {
+        const user = await this.authRepository.getUserByEmail(email);
+        if(!user) {
+            throw new Error("User not found");
+        }
+
+        try {
+            const newOtp = await this.authRepository.regenerateOtp(user.id);
+            if(!newOtp) {
+                throw new Error("Error regenerating OTP");
+            }
+            await sendEmail({
+                to: user.email,
+                templateId: process.env.SENDGRID_OTP_TEMPLATE_ID!,
+                dynamicTemplateData: {
+                    firstName: user.firstName,
+                    login_link: process.env.SENDGRID_LOGIN_LINK,
+                    help_center_link: process.env.SENDGRID_HELP_CENTER_LINK,
+                    otp: newOtp
+                }
+            })
+        } catch (error) {
+            console.error("Error sending email:", error);
+        }
     }
 
     async login(userData: UserLoginData): Promise<LoginResponse> {
@@ -52,6 +118,10 @@ export default class AuthService {
         const isPasswordValid = await bcrypt.compare(userData.password, user.password);
         if (!isPasswordValid) {
             throw new Error("Invalid credentials");
+        }
+
+        if (!user.isApproved) {
+            throw new Error("User is not approved");
         }
 
         const accessToken = await this.generateToken(user, "15m");
@@ -82,7 +152,7 @@ export default class AuthService {
             await this.authRepository.storeResetToken(user.id, resetToken, resetTokenExpiry);
             await sendEmail({
                 to: user.email,
-                templateId: process.env.SENDGRID_TEMPLATE_ID!,
+                templateId: process.env.SENDGRID_RESET_TEMPLATE_ID!,
                 dynamicTemplateData: {
                     firstName: user.firstName,
                     resetLink: `${process.env.APP_URL}/reset-password?token=${resetToken}`,

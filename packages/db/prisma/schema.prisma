@@ -15,6 +15,8 @@ model User {
   password          String
   resetToken        String?
   resetTokenExpiry  DateTime?
+  otp               String?
+  otpExpiry         DateTime?
   accountType       String?   @default("Student")
   isActive          Boolean   @default(true)
   isApproved        Boolean   @default(false)
