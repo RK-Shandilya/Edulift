@@ -1,10 +1,45 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Order {
+  id                String        @id @default(cuid())
+  userId            String
+  amount            Float
+  currency          String        @default("INR")
+  status            OrderStatus   @default(CREATED)
+  paymentId         String?
+  razorpayOrderId   String        @unique
+  razorpaySignature String?
+  paymentMethod     String?    
+  receipt           String?
+  refunds           Refund[]
+  
+  courseId          String?
+  course            Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model Refund {
+  id        String   @id @default(cuid())
+  orderId   String
+  amount    Float
+  status    String   @default("PENDING")
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
 }
 
 model User {
@@ -23,6 +58,7 @@ model User {
   image             String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  orders            Order[]
 
   coursesCreated    Course[]  @relation("InstructorCourses")
   coursesEnrolled    Course[]  @relation("EnrolledStudents")
@@ -67,6 +103,7 @@ model Course {
   sections          Section[]
   ratings           RatingAndReview[]
   courseProgress    CourseProgress[]
+  orders            Order[]
 
   @@map("courses")
 }
@@ -149,4 +186,11 @@ model CourseProgress {
 enum CourseStatus {
   Draft
   Published
+}
+
+enum OrderStatus {
+  CREATED
+  COMPLETED
+  FAILED
+  REFUNDED
 }

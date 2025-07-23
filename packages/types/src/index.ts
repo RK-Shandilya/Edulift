@@ -140,3 +140,102 @@ export interface ICourseProgress {
     createdAt?: Date;
     updatedAt?: Date;
 }
+
+export interface IOrder {
+    id?: string;
+    courseId?: string | null;
+    userId: string;
+    amount: number;
+    currency: string;
+    status: OrderStatus;
+    paymentId?: string | null;
+    razorpayOrderId: string;
+    razorpaySignature?: string | null;
+    paymentMethod?: string | null;
+    receipt?: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export enum OrderStatus {
+    CREATED = "CREATED",
+    COMPLETED = "COMPLETED",
+    FAILED = "FAILED",
+    REFUNDED = "REFUNDED"
+}
+
+// Input data from frontend/client
+export interface CreateOrderData {
+    amount: number;
+    userId: string;
+    currency?: string;
+    courseId?: string | null;
+    notes?: Record<string, any>;
+}
+
+// Data for creating Razorpay order
+export interface RazorpayOrderOptions {
+    amount: number;
+    currency: string;
+    receipt: string;
+    notes?: Record<string, any>;
+}
+
+// Input for creating order in database
+export interface CreateOrderInput {
+    razorpayOrderId: string;
+    amount: number;
+    userId: string;
+    currency: string;
+    courseId?: string | null;
+    receipt: string;
+}
+
+// Input for updating order in database
+export interface UpdateOrderInput {
+    id: string;
+    paymentId?: string;
+    status: OrderStatus;
+    razorpaySignature?: string;
+    paymentMethod?: string;
+    receipt?: string;
+}
+
+export interface OrderResponse {
+    orderId: string;
+    amount: number;
+    currency: string;
+    key: string;
+    order: IOrder;
+}
+
+// Razorpay webhook interfaces
+export interface RazorpayPaymentEntity {
+    id: string;
+    order_id: string;
+    method: string;
+    status: string;
+    signature?: string;
+    receipt: string;
+    amount: number;
+    currency: string;
+}
+
+export interface RazorpayWebhookPayload {
+    event: string;
+    payload: {
+        payment: {
+            entity: RazorpayPaymentEntity;
+        };
+    };
+}
+
+export interface IRefund {
+    id?: string;
+    orderId: string;
+    amount: number;
+    status: string;
+    reason?: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
