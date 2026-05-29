@@ -28,6 +28,6 @@ cron.schedule("0 0 * * *", () => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on Port ${PORT}`)
-})
+});
 
 export default app;
