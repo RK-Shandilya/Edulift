@@ -1,0 +1,200 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Order {
+  id                String        @id @default(cuid())
+  userId            String
+  amount            Float
+  currency          String        @default("INR")
+  status            OrderStatus   @default(CREATED)
+  paymentId         String?
+  razorpayOrderId   String        @unique
+  razorpaySignature String?
+  paymentMethod     String?    
+  receipt           String?
+  refunds           Refund[]
+  
+  courseId          String?
+  course            Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model Refund {
+  id        String   @id @default(cuid())
+  orderId   String
+  amount    Float
+  status    String   @default("PENDING")
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  firstName         String
+  lastName          String
+  password          String
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  otp               String?
+  otpExpiry         DateTime?
+  accountType       String?   @default("Student")
+  isActive          Boolean   @default(true)
+  isApproved        Boolean   @default(false)
+  image             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  orders            Order[]
+
+  coursesCreated    Course[]  @relation("InstructorCourses")
+  coursesEnrolled    Course[]  @relation("EnrolledStudents")
+  ratings           RatingAndReview[]
+  courseProgress    CourseProgress[]
+  refreshTokens    RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("refreshToken")
+}
+
+model Course {
+  id                String    @id @default(cuid())
+  courseName        String
+  courseDescription String
+  whatYouWillLearn  String?
+  price             Float
+  thumbnail         String?
+  tag               String[]
+  instructions      String[]
+  status            CourseStatus @default(Draft)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  instructorId      String
+  categoryId        String?
+
+  instructor        User      @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
+  category          Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  studentsEnrolled  User[]    @relation("EnrolledStudents")
+  sections          Section[]
+  ratings           RatingAndReview[]
+  courseProgress    CourseProgress[]
+  orders            Order[]
+
+  @@map("courses")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  courses     Course[]
+
+  @@map("categories")
+}
+
+model Section {
+  id          String    @id @default(cuid())
+  sectionName String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  courseId    String
+
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  subsections Subsection[]
+
+  @@map("sections")
+}
+
+model Subsection {
+  id           String    @id @default(cuid())
+  title        String
+  timeDuration String
+  description  String?
+  videoUrls    String[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sectionId    String
+
+  section      Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  completedBy  CourseProgress[] @relation("CompletedVideos")
+
+  @@map("subsections")
+}
+
+model RatingAndReview {
+  id        String   @id @default(cuid())
+  rating    Int      @db.SmallInt
+  review    String
+  createdAt DateTime @default(now())
+
+  courseId  String
+  userId    String
+
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@map("ratings_and_reviews")
+}
+
+model CourseProgress {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  courseId        String
+  userId          String
+
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completedVideos Subsection[] @relation("CompletedVideos")
+
+  @@unique([courseId, userId])
+  @@map("course_progress")
+}
+
+enum CourseStatus {
+  Draft
+  Published
+}
+
+enum OrderStatus {
+  CREATED
+  COMPLETED
+  FAILED
+  REFUNDED
+}
